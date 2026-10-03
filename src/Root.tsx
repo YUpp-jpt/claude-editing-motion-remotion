@@ -1,14 +1,16 @@
 import React from 'react';
 import {Composition} from 'remotion';
 import {ClaudeEditingMotion} from './Composition';
+import {VIDEO} from './video-config';
 
 export const RemotionRoot: React.FC = () => (
   <Composition
-    id="ClaudeEditingMotion"
+    id={VIDEO.id}
     component={ClaudeEditingMotion}
-    durationInFrames={900}
-    fps={30}
-    width={1280}
-    height={720}
+    durationInFrames={VIDEO.frames}
+    fps={VIDEO.fps}
+    width={VIDEO.width}
+    height={VIDEO.height}
+    defaultProps={{}}
   />
 );

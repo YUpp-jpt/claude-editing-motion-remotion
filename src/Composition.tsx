@@ -1,8 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {AbsoluteFill, Audio, cancelRender, continueRender, delayRender, staticFile, useCurrentFrame} from 'remotion';
 import {Mascot} from './Artwork';
-import {Box, Confetti, Editor, ink, paper, Phone} from './Editor';
+import {Confetti, Editor, Phone} from './Editor';
+import {Box, Star} from './components/Drawing';
+import {ink, paper} from './palette';
 import {camera, clamp, progress, tween} from './timing';
+import {VIDEO} from './video-config';
 
 const CodeIntro: React.FC<{t:number}> = ({t}) => {
   const scale=tween(t,.2,.65,1,.64);const x=tween(t,.2,.65,313,190),y=tween(t,.2,.65,248,42);
@@ -33,23 +36,26 @@ const Ending: React.FC<{t:number;frame:number}> = ({t,frame}) => {
       <path d="M 132 -10 L 227 -11 L 227 8 L 133 10 Z" fill="#edcb67" opacity=".82"/><path d="M 135 -6 H 224" stroke="#f5dc8a" strokeWidth="2" opacity=".7"/>
       <g opacity={progress(t,27.0,27.7)}><text x="29" y="82" fontSize="35">{noteText.slice(0,Math.min(noteText.length,Math.floor((t-27)*15)))}</text></g>
       <defs><clipPath id="note-writing"><rect x="23" y="98" width={340*progress(t,27.75,28.6)} height="116"/></clipPath></defs>
-      <text x="24" y="198" fontSize="72" fontWeight="700" fontStyle="italic" clipPath="url(#note-writing)">Opus 5.5</text>
+      <text x="24" y="198" fontSize="72" fontWeight="400" fontStyle="italic" clipPath="url(#note-writing)">Opus 5.5</text>
       <path d={`M 24 215 Q 159 194 ${24+308*progress(t,28.6,29.15)} 214`} stroke="#ce7c6c" strokeWidth="6" fill="none" strokeLinecap="round" opacity={t>=28.6?1:0}/>
-      <text x="223" y="280" textAnchor="middle" fontSize="31" opacity={progress(t,28.75,29.3)}>— 小克</text>
+      <g opacity={progress(t,28.75,29.3)}><text x="223" y="280" textAnchor="middle" fontSize="29">— 小克 收工</text><Star x={329} y={268} size={8}/></g>
     </g>
     <Phone x={x} y={y} w={w} h={h} t={t} frame={frame} social/>
-    <g transform={`translate(924 ${tween(t,26.6,27.2,603,420)}) rotate(${Math.sin(t*8)*2})`}><Mascot frame={frame} pose={t>28.9?'wink':'happy'} sunglasses={t<28.4} width={226} height={182}/></g>
+    <g transform={`translate(924 ${tween(t,26.6,27.2,603,420)}) rotate(${Math.sin(t*8)*2})`}><Mascot frame={frame} pose={t>28.9?'wink':'happy'} sunglasses width={226} height={182}/></g>
     <Confetti t={t}/>
   </g>;
 };
 
-export const ClaudeEditingMotion: React.FC = () => {
-  const frame=useCurrentFrame();const t=frame/30;
+export type MotionProps = {audioSrc?: string; fontSrc?: string};
+
+export const ClaudeEditingMotion: React.FC<MotionProps> = ({audioSrc, fontSrc}) => {
+  const frame=useCurrentFrame();const t=frame/VIDEO.fps;
+  const fontUrl=fontSrc??staticFile('fonts/MotionHand-Regular.woff2');
   const [fontHandle]=useState(()=>delayRender('Load bundled handwriting font'));
   useEffect(()=>{
-    const font=new FontFace('WenKai',`url(${staticFile('fonts/LXGWWenKaiLite-Regular.ttf')})`);
+    const font=new FontFace('WenKai',`url(${fontUrl})`);
     font.load().then(async f=>{document.fonts.add(f);await document.fonts.ready;await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));continueRender(fontHandle);}).catch(cancelRender);
-  },[fontHandle]);
+  },[fontHandle,fontUrl]);
   const cam=camera(t);const intro=1-progress(t,.5,.86);
   return <AbsoluteFill style={{backgroundColor:paper}}>
     <svg width="1280" height="720" viewBox="0 0 1280 720" style={{fontFamily:'WenKai, serif',color:ink}}>
@@ -61,6 +67,6 @@ export const ClaudeEditingMotion: React.FC = () => {
       {t>=26.5&&<Ending t={t} frame={frame}/>}
       <rect width="1280" height="720" filter="url(#paper-grain)" opacity=".22" pointerEvents="none"/>
     </svg>
-    <Audio src={staticFile('audio/recreated.wav')} volume={0.85}/>
+    <Audio src={audioSrc??staticFile('audio/recreated.wav')} volume={0.85}/>
   </AbsoluteFill>;
 };

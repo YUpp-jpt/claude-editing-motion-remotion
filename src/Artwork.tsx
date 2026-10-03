@@ -8,6 +8,8 @@ export type SceneArtProps = {
   frame: number;
   width?: number;
   height?: number;
+  /** Compose a small horizontal asset tile without losing scene landmarks. */
+  thumbnail?: boolean;
   /** White sparkle overlay, from 0 to 1. */
   flash?: number;
   /** Saturation multiplier: 1 is the original palette. */
@@ -16,7 +18,7 @@ export type SceneArtProps = {
 
 export type MascotProps = {
   frame: number;
-  pose?: 'idle' | 'happy' | 'surprised' | 'wink';
+  pose?: 'idle' | 'happy' | 'surprised' | 'wink' | 'excited';
   sunglasses?: boolean;
   width?: number;
   height?: number;
@@ -37,13 +39,23 @@ const Heart = ({x, y, size = 10, rotation = 0}: {x: number; y: number; size?: nu
   </g>
 );
 
+const StarEye = ({x, y}: {x: number; y: number}) => {
+  const points = Array.from({length: 10}, (_, i) => {
+    const angle = -Math.PI / 2 + i * Math.PI / 5;
+    const radius = i % 2 === 0 ? 9 : 4.2;
+    return `${x + Math.cos(angle) * radius},${y + Math.sin(angle) * radius}`;
+  }).join(' ');
+  return <polygon points={points} fill="#f6d36c" stroke={INK} strokeWidth="1.7" strokeLinejoin="round" />;
+};
+
 export const Mascot: React.FC<MascotProps> = ({frame, pose = 'idle', sunglasses = false, width = 180, height = 160}) => {
   const t = frame / 30;
   const bob = pose === 'idle' ? Math.sin(t * 2.6) * 0.5 : Math.sin(t * 7.2) * 2.1;
   const tilt = pose === 'happy' ? Math.sin(t * 5.4) * 5 : pose === 'wink' ? -3 : 0;
   const blink = frame % 126 >= 122;
-  const leftHand = pose === 'happy' ? [21, 29 + Math.sin(t * 5.4) * 4] : pose === 'surprised' ? [17, 54] : [26, 91];
-  const rightHand = pose === 'happy' || pose === 'wink' ? [166, 32 - Math.sin(t * 5.4) * 4] : pose === 'surprised' ? [162, 54] : [158, 91];
+  const celebrating = pose === 'happy' || pose === 'excited';
+  const leftHand = celebrating ? [21, 29 + Math.sin(t * 5.4) * 4] : pose === 'surprised' ? [17, 54] : [26, 91];
+  const rightHand = celebrating || pose === 'wink' ? [166, 32 - Math.sin(t * 5.4) * 4] : pose === 'surprised' ? [162, 54] : [158, 91];
   const arms = [
     `M 41 89 Q 25 82 ${leftHand[0]} ${leftHand[1]}`,
     `M 143 89 Q 159 78 ${rightHand[0]} ${rightHand[1]}`,
@@ -51,9 +63,11 @@ export const Mascot: React.FC<MascotProps> = ({frame, pose = 'idle', sunglasses 
   return (
     <svg width={width} height={height} viewBox="0 0 180 160" preserveAspectRatio="xMidYMid meet" aria-label="小克，珊瑚色方块角色">
       <g transform={`translate(0 ${bob}) rotate(${tilt} 92 121)`}>
-        <path d="M 51 119 L 51 148 Q 56 151 65 148 L 67 120 Z" fill={CORAL} {...outline} strokeWidth="3.1" />
-        <path d="M 115 120 L 118 149 Q 124 151 131 148 L 129 119 Z" fill={CORAL} {...outline} strokeWidth="3.1" />
-        <path d="M 59 123 L 58 146 M 124 123 L 126 147" stroke="#ec9b80" strokeWidth="1.5" opacity=".8" />
+        <path d="M 51 119 L 51 148 Q 55 150 61 148 L 62 120 Z" fill={CORAL} {...outline} strokeWidth="2.8" />
+        <path d="M 68 120 L 68 149 Q 73 151 78 149 L 79 121 Z" fill={CORAL} {...outline} strokeWidth="2.8" />
+        <path d="M 112 120 L 114 149 Q 119 151 123 149 L 122 119 Z" fill={CORAL} {...outline} strokeWidth="2.8" />
+        <path d="M 129 120 L 132 148 Q 136 150 141 147 L 138 119 Z" fill={CORAL} {...outline} strokeWidth="2.8" />
+        <path d="M 57 124 L 56 146 M 74 124 L 74 147 M 118 124 L 120 147 M 135 124 L 138 146" stroke="#ec9b80" strokeWidth="1.1" opacity=".8" />
         {arms.map((d, index) => <g key={index}><path d={d} fill="none" stroke={INK} strokeWidth="13" strokeLinecap="round" /><path d={d} fill="none" stroke={CORAL} strokeWidth="8.5" strokeLinecap="round" /></g>)}
         <circle cx={leftHand[0]} cy={leftHand[1]} r="7.8" fill={CORAL} {...outline} />
         <circle cx={rightHand[0]} cy={rightHand[1]} r="7.8" fill={CORAL} {...outline} />
@@ -61,13 +75,15 @@ export const Mascot: React.FC<MascotProps> = ({frame, pose = 'idle', sunglasses 
         <path d="M 46 54 Q 80 52 110 53" fill="none" stroke="#f4b295" strokeWidth="2.4" strokeLinecap="round" opacity=".65" />
         <path d="M 44 116 Q 87 120 140 120" fill="none" stroke="#b45b4c" strokeWidth="1.3" opacity=".6" />
         {[0, 1, 2, 3, 4, 5, 6, 7].map(i => <path key={i} d={`M ${46 + i * 5} ${114 - i * 0.6} l 11 -12`} stroke="#b85f51" strokeWidth=".7" opacity=".45" />)}
-        {pose === 'happy' || blink ? (
+        {pose === 'excited' ? (
+          <><StarEye x={78} y={82} /><StarEye x={110} y={82} /></>
+        ) : pose === 'happy' || blink ? (
           <><path d="M 74 84 Q 78 72 83 84" fill="none" stroke={INK} strokeWidth="3.6" strokeLinecap="round" /><path d="M 105 84 Q 110 72 114 84" fill="none" stroke={INK} strokeWidth="3.6" strokeLinecap="round" /></>
         ) : (
           <><path d="M 77 77 Q 73 77 74 87 Q 74 91 78 90 Q 81 89 81 81 Q 81 77 77 77 Z" fill="#282c27" /><circle cx="77" cy="80" r="1.4" fill="#fff7d6" />{pose === 'wink' ? <path d="M 106 84 Q 111 74 116 84" fill="none" stroke={INK} strokeWidth="3.6" strokeLinecap="round" /> : <><path d="M 110 77 Q 106 77 107 87 Q 107 91 111 90 Q 114 89 114 81 Q 114 77 110 77 Z" fill="#282c27" /><circle cx="110" cy="80" r="1.4" fill="#fff7d6" /></>}</>
         )}
         {pose === 'surprised' && <ellipse cx="94" cy="100" rx="4" ry="5" fill={INK} />}
-        {(pose === 'happy' || pose === 'wink') && <><ellipse cx="60" cy="96" rx="7" ry="3.5" fill="#e48c90" opacity=".75" /><ellipse cx="128" cy="96" rx="7" ry="3.5" fill="#e48c90" opacity=".75" /></>}
+        {(celebrating || pose === 'wink') && <><ellipse cx="60" cy="96" rx="7" ry="3.5" fill="#e48c90" opacity=".75" /><ellipse cx="128" cy="96" rx="7" ry="3.5" fill="#e48c90" opacity=".75" /></>}
         {sunglasses && <g transform="rotate(-4 94 49)"><path d="M 61 43 L 121 42 L 116 55 Q 104 59 98 51 L 90 51 Q 82 60 67 55 Z" fill="#292726" stroke={INK} strokeWidth="1.7" /><path d="M 70 46 l -4 5 M 78 45 l -5 6 M 108 45 l -5 6" fill="none" stroke="#f8f0dc" strokeWidth="2" strokeLinecap="round" /></g>}
       </g>
     </svg>
@@ -243,11 +259,18 @@ const Dance = ({frame, id, flash}: {frame: number; id: string; flash: number}) =
   </>;
 };
 
-export const SceneArt: React.FC<SceneArtProps> = ({kind, frame, width = 240, height = 360, flash = 0, saturation = 1}) => {
+const thumbnailViewBox: Record<SceneKind, string> = {
+  night: '0 0 240 360',
+  ramen: '0 112 240 208',
+  shiba: '0 88 240 222',
+  dance: '0 0 240 330',
+};
+
+export const SceneArt: React.FC<SceneArtProps> = ({kind, frame, width = 240, height = 360, flash = 0, saturation = 1, thumbnail = false}) => {
   const id = `art-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const sat = Math.max(0, Math.min(2, saturation));
   return (
-    <svg width={width} height={height} viewBox="0 0 240 360" preserveAspectRatio="xMidYMid slice" style={{overflow: 'hidden', filter: `saturate(${sat})`}} aria-label={`${kind} 手绘动画`}>
+    <svg width={width} height={height} viewBox={thumbnail ? thumbnailViewBox[kind] : '0 0 240 360'} preserveAspectRatio={thumbnail ? 'none' : 'xMidYMid slice'} style={{overflow: 'hidden', filter: `saturate(${sat})`}} aria-label={`${kind} 手绘动画`}>
       {kind === 'night' && <Night frame={frame} id={id} />}
       {kind === 'ramen' && <Ramen frame={frame} id={id} />}
       {kind === 'shiba' && <Shiba frame={frame} id={id} />}

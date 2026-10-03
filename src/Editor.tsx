@@ -1,37 +1,20 @@
 import React, {useId} from 'react';
 import {Mascot, SceneArt} from './Artwork';
 import {clamp, ease, progress, sceneKind, track, tween} from './timing';
+import {Box, Caption, Controls, Dust, LongArm, Speech, Star} from './components/Drawing';
+import {ink, paper, mint, yellow, red} from './palette';
+export {Box, Caption, Star} from './components/Drawing';
+export {ink, paper, mint, yellow} from './palette';
 
-export const ink = '#292720';
-export const paper = '#f6f3ea';
-export const mint = '#83cbb9';
-export const yellow = '#efd175';
-const red = '#d75a69';
 type Kind = 'night' | 'ramen' | 'shiba' | 'dance';
 const names: Record<Kind, string> = {night: '夜景.mp4', ramen: '拉面.mp4', shiba: '柴犬.mov', dance: '小克蹦迪.mp4'};
-
-export const Box: React.FC<{x: number; y: number; w: number; h: number; fill?: string; stroke?: string; width?: number; radius?: number; opacity?: number}> = ({x,y,w,h,fill=paper,stroke=ink,width=2.5,radius=11,opacity=1}) => {
-  const r=Math.min(radius,w/3,h/3);
-  return <g opacity={opacity} strokeLinecap="round" strokeLinejoin="round">
-    <path d={`M ${x+r} ${y+1} Q ${x+1} ${y-1} ${x} ${y+r} L ${x+1} ${y+h-r} Q ${x-1} ${y+h+1} ${x+r} ${y+h} L ${x+w-r} ${y+h-1} Q ${x+w+1} ${y+h+1} ${x+w} ${y+h-r} L ${x+w-1} ${y+r} Q ${x+w+1} ${y-1} ${x+w-r} ${y} Z`} fill={fill} stroke={stroke} strokeWidth={width}/>
-    <path d={`M ${x+5} ${y+12} Q ${x+4} ${y+5} ${x+14} ${y+5} L ${x+w-16} ${y+4} M ${x+w-4} ${y+16} L ${x+w-3} ${y+h-16} M ${x+15} ${y+h-4} L ${x+w-15} ${y+h-3}`} fill="none" stroke={stroke} strokeWidth=".8" opacity=".28"/>
-  </g>;
-};
-
-export const Star: React.FC<{x: number;y: number;size?: number;fill?: string;opacity?: number}> = ({x,y,size=9,fill=yellow,opacity=1}) => <path d={`M ${x} ${y-size} Q ${x+size*.2} ${y-size*.2} ${x+size} ${y} Q ${x+size*.2} ${y+size*.2} ${x} ${y+size} Q ${x-size*.2} ${y+size*.2} ${x-size} ${y} Q ${x-size*.2} ${y-size*.2} ${x} ${y-size} Z`} fill={fill} stroke={ink} strokeWidth="1.5" opacity={opacity}/>;
-
-export const Caption: React.FC<{x:number;y:number;children:React.ReactNode;color?:string;size?:number;angle?:number}> = ({x,y,children,color=yellow,size=38,angle=-5}) => <g transform={`translate(${x} ${y}) rotate(${angle})`}><text textAnchor="middle" fontSize={size} fontWeight="700" stroke={ink} strokeWidth="8" paintOrder="stroke" strokeLinejoin="round" fill={color}>{children}</text><text y="1" textAnchor="middle" fontSize={size} fontWeight="700" fill={color}>{children}</text></g>;
-
-const Speech: React.FC<{x:number;y:number;w?:number;text:string}> = ({x,y,w=94,text}) => <g transform={`translate(${x} ${y}) rotate(-3)`}><path d={`M 10 0 Q 0 0 0 10 L 0 33 Q 0 41 10 41 L 39 41 L 49 51 L 53 41 L ${w-10} 41 Q ${w} 41 ${w} 31 L ${w} 9 Q ${w} 0 ${w-10} 0 Z`} fill="#fffdf7" stroke={ink} strokeWidth="2.2"/><text x={w/2} y="28" textAnchor="middle" fontSize="23">{text}</text></g>;
-
-const Controls: React.FC<{x:number;y:number;playing?:boolean}> = ({x,y,playing=false}) => <g transform={`translate(${x} ${y})`} stroke={ink} strokeWidth="1.5" opacity=".7"><path d="M -33 -5 L -33 5 M -25 -5 L -32 0 L -25 5 Z" fill={ink}/><circle r="10" fill="none"/>{playing?<path d="M -3 -5 V 5 M 3 -5 V 5" strokeWidth="3"/>:<path d="M -3 -5 L 5 0 L -3 5 Z" fill={ink}/>}<path d="M 33 -5 L 33 5 M 25 -5 L 32 0 L 25 5 Z" fill={ink}/></g>;
 
 const Thumbnail: React.FC<{x:number;y:number;w:number;h:number;kind:Kind;frame:number;label?:boolean;time?:string;selected?:boolean}> = ({x,y,w,h,kind,frame,label=true,time,selected=false}) => {
   const id=useId().replaceAll(':','');
   return <g>
     {selected&&<Box x={x-5} y={y-5} w={w+10} h={h+10} fill="#fff2c9" stroke={yellow} width={3}/>}
     <defs><clipPath id={id}><rect x={x+1} y={y+1} width={w-2} height={h-2} rx="7"/></clipPath></defs>
-    <g clipPath={`url(#${id})`}><g transform={`translate(${x} ${y})`}><SceneArt kind={kind} frame={frame} width={w} height={h}/></g></g>
+    <g clipPath={`url(#${id})`}><g transform={`translate(${x} ${y})`}><SceneArt kind={kind} frame={frame} width={w} height={h} thumbnail/></g></g>
     <Box x={x} y={y} w={w} h={h} fill="none" radius={7} width={2.1}/>
     {time&&<g><rect x={x+w-31} y={y+h-17} width="30" height="15" rx="3" fill={ink} opacity=".68"/><text x={x+w-16} y={y+h-5} fontSize="12" fill="white" textAnchor="middle">{time}s</text></g>}
     {label&&<text x={x+w/2} y={y+h+15} textAnchor="middle" fontSize="14">{names[kind]}</text>}
@@ -53,7 +36,7 @@ const Library: React.FC<{t:number;frame:number}> = ({t,frame}) => {
       <Thumbnail x={40} y={201} w={109} h={65} kind="shiba" frame={frame} time="2.4" selected={t>=3.25&&t<3.65}/>
       <Thumbnail x={158} y={201} w={109} h={65} kind="dance" frame={frame} time="2.8" selected={t>=3.65&&t<4.1}/>
       {[40,158].map(x=><g key={x}><rect x={x} y="292" width="105" height="61" rx="7" fill="none" stroke="#aaa79c" strokeWidth="1.4" strokeDasharray="4 5"/><text x={x+52} y="333" textAnchor="middle" fontSize="40" fill="#aaa79c">+</text><text x={x+52} y="369" textAnchor="middle" fontSize="14" fill="#b3afa5">导入素材</text></g>)}
-    </g>:tab===1?<g>{['旋转','翻页','酷','缩','滑','拼'].map((label,i)=>{const x=42+(i%2)*118,y=113+Math.floor(i/2)*83;return <g key={label}><Box x={x} y={y} w={106} h={64} fill={['#ded5ed','#daeee1','#f4dce6','#d5e8f0','#f6e9bb','#e9e1f3'][i]} radius={6} width={2}/><TransitionIcon type={i} x={x+53} y={y+32}/><text x={x+53} y={y+79} textAnchor="middle" fontSize="15">{label}</text></g>;})}</g>:<g>
+    </g>:tab===1?<g>{['旋转','翻页','故障','缩放','滑动','溶解'].map((label,i)=>{const x=42+(i%2)*118,y=113+Math.floor(i/2)*83;return <g key={label}><Box x={x} y={y} w={106} h={64} fill={['#ded5ed','#daeee1','#f4dce6','#d5e8f0','#f6e9bb','#e9e1f3'][i]} radius={6} width={2}/><TransitionIcon type={i} x={x+53} y={y+32}/><text x={x+53} y={y+79} textAnchor="middle" fontSize="15">{label}</text></g>;})}</g>:<g>
       <Box x={40} y={112} w={226} h={80} fill="#fff4d4" radius={8}/><text x="53" y="129" fontSize="13" fill="#afa99b">爆款</text><Caption x={153} y={165} angle={0} size={32}>前方高能</Caption>
       <Box x={40} y={206} w={226} h={78} fill="#f9e5eb" radius={8}/><text x="53" y="223" fontSize="13" fill="#afa99b">可爱</text><rect x="98" y="226" width="112" height="42" rx="19" fill="white" stroke="#d089a3" strokeWidth="1.5"/><text x="154" y="255" textAnchor="middle" fontSize="25" fontWeight="bold" fill="#ce82a3">好耶～</text>
       <Box x={40} y={298} w={226} h={68} fill="#302739" radius={8}/><text x="53" y="315" fontSize="13" fill="#d7cadd">霓虹</text><text x="154" y="345" textAnchor="middle" fontSize="27" fill="#e8ccff" stroke="#9971b6" strokeWidth="2" paintOrder="stroke">霓虹 NEON</text>
@@ -134,7 +117,7 @@ const Clips: React.FC<{t:number;frame:number}> = ({t,frame}) => {
   const trimmed=progress(t,7.2,7.65); const ramenWidth=326-166*ease(trimmed);
   const clips=[{kind:'night' as Kind,x:100,w:170,enter:2.32},{kind:'ramen' as Kind,x:272,w:ramenWidth,enter:2.95},{kind:'shiba' as Kind,x:274+ramenWidth,w:170,enter:3.5},{kind:'dance' as Kind,x:446+ramenWidth,w:196,enter:3.9}];
   return <g>{clips.map(({kind,x,w,enter})=><g key={kind} opacity={progress(t,enter,enter+.16)}>
-    <svg x={x} y={483} width={w} height="68" viewBox={`0 0 ${w} 68`}><defs><clipPath id={`track-${kind}`}><rect width={w} height="68" rx="6"/></clipPath></defs><g clipPath={`url(#track-${kind})`}>{Array.from({length:Math.ceil(w/62)},(_,i)=><g key={i} transform={`translate(${i*62} 0)`}><SceneArt kind={kind} frame={frame+i*12} width={63} height={68}/></g>)}</g></svg>
+    <svg x={x} y={483} width={w} height="68" viewBox={`0 0 ${w} 68`}><defs><clipPath id={`track-${kind}`}><rect width={w} height="68" rx="6"/></clipPath></defs><g clipPath={`url(#track-${kind})`}>{Array.from({length:Math.ceil(w/62)},(_,i)=><g key={i} transform={`translate(${i*62} 0)`}><SceneArt kind={kind} frame={frame+i*12} width={63} height={68} thumbnail/></g>)}</g></svg>
     <Box x={x} y={483} w={w} h={68} fill="none" radius={6} width={2.4}/><rect x={x+5} y="486" width={kind==='dance'?87:63} height="17" rx="5" fill="#fffdf6" stroke={ink} strokeWidth=".8"/><text x={x+9} y="499" fontSize="12.5">{names[kind]}</text>
     {kind==='ramen'&&t>3.05&&t<7.65&&<g opacity={1-trimmed}><rect x={x+128} y="484" width={130*(1-trimmed)} height="65" fill="#8e8a7d" opacity=".92"/><rect x={x+128} y="484" width={130*(1-trimmed)} height="65" fill="url(#hatching)" stroke="#e19c66" strokeWidth="1.5"/><text x={x+165} y="531" fontSize="44" fill="#c1beb5">≈</text></g>}
     {kind==='ramen'&&t>7.65&&<path d={`M ${x+ramenWidth*.65} 483 V 551`} stroke={ink} strokeWidth="2"/>}
@@ -165,10 +148,6 @@ const Timeline: React.FC<{t:number;frame:number}> = ({t,frame}) => {
   </g>;
 };
 
-const LongArm: React.FC<{x:number;y:number;tx:number;ty:number;bright?:boolean;left?:boolean}> = ({x,y,tx,ty,bright=false,left=false}) => <g fill="none" strokeLinecap="round"><path d={`M ${x} ${y} Q ${(x+tx)/2} ${(y+ty)/2+35} ${tx} ${ty}`} stroke={ink} strokeWidth="12"/><path d={`M ${x} ${y} Q ${(x+tx)/2} ${(y+ty)/2+35} ${tx} ${ty}`} stroke={bright?'#fa263a':'#c87967'} strokeWidth="8"/><path d={`M ${x} ${y} Q ${(x+tx)/2} ${(y+ty)/2+34} ${tx} ${ty}`} stroke="#e29781" strokeWidth="1.1"/><circle cx={tx} cy={ty} r="7" fill={bright?'#f53545':'#c87967'} stroke={ink} strokeWidth="2"/>{left&&<circle cx={tx-1} cy={ty-1} r="2" fill="#e8ad98"/>}</g>;
-
-const Dust: React.FC<{x:number;y:number;t:number}> = ({x,y,t}) => <g transform={`translate(${x} ${y})`} opacity={Math.max(0,1-t)}>{[[-22,3,14],[-8,0,17],[13,4,13],[32,1,10]].map(([dx,dy,r],i)=><path key={i} d={`M ${dx-r} ${dy+6} C ${dx-r-3} ${dy-r} ${dx} ${dy-r-7} ${dx+4} ${dy-r/2} C ${dx+r+13} ${dy-r/2} ${dx+r+10} ${dy+13} ${dx+r} ${dy+12} Z`} fill="#fffdf3" stroke={ink} strokeWidth="1.4" transform={`translate(${(i-1.5)*t*18} ${-t*8})`}/>)}</g>;
-
 const Actor: React.FC<{t:number;frame:number}> = ({t,frame}) => {
   if(t<1.32)return null;
   const x=track(t,[1.32,2,7.6,8,13.1,13.85,14.2,15.4,18.6,20,21,22.2,23.3,25.9,26.4],[147,147,147,151,151,315,315,480,480,445,445,600,870,870,885]);
@@ -193,7 +172,7 @@ const Actor: React.FC<{t:number;frame:number}> = ({t,frame}) => {
   return <g>
     {t<1.88&&[12,38,67].map((dx,i)=><path key={i} d={`M ${x+dx} ${y-148} V ${y-15}`} stroke={ink} strokeWidth="1.4" opacity=".5"/>)}
     {target&&<LongArm x={x+109} y={y+65} tx={target.x} ty={target.y} bright={bright}/>}
-    <g transform={`translate(${x} ${y+Math.sin(t*8)*1.3})`} style={{filter:bright?'saturate(5) hue-rotate(-15deg)':undefined}}><Mascot frame={frame} width={142} height={126} pose={startled?'surprised':happy?'happy':'idle'} sunglasses={bright||t>20.8}/></g>
+    <g transform={`translate(${x} ${y+Math.sin(t*8)*1.3})`} style={{filter:bright?'saturate(5) hue-rotate(-15deg)':undefined}}><Mascot frame={frame} width={142} height={126} pose={t>=24&&t<25.65?'excited':startled?'surprised':happy?'happy':'idle'} sunglasses={bright||t>20.8}/></g>
     {t>1.98&&t<2.65&&<Speech x={x+17} y={y-29} text="开工!" w={78}/>}
     {t>5.3&&t<6.7&&<Speech x={x+210} y={y+12} text="这段在发呆 zzz" w={150}/>}
     {t>=5.2&&t<7.0&&target&&<g transform={`translate(${target.x} ${target.y}) rotate(22)`}><path d="M -5 2 L -5 -27 L 5 -27 L 5 2 Z" fill={yellow} stroke={ink} strokeWidth="1.6"/><path d="M -5 -27 L -6 -38 L 0 -48 L 6 -38 L 5 -27 Z" fill="#fff9e9" stroke={ink} strokeWidth="1.6"/><path d="M 0 -47 V -34" stroke={ink} strokeWidth="1.4"/></g>}
